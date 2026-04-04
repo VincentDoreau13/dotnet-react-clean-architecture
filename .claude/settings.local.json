@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet add:*)",
+      "Bash(dotnet build:*)",
+      "Bash(grep -v \"^$\")",
+      "Bash(xargs grep:*)",
+      "Bash(dotnet ef:*)"
+    ]
+  }
+}
