@@ -6,11 +6,6 @@ on:
     paths:
       - "src/back/**"
       - ".github/workflows/back-ci.yml"
-  pull_request:
-    branches: [master, develop]
-    paths:
-      - "src/back/**"
-      - ".github/workflows/back-ci.yml"
 
 defaults:
   run:

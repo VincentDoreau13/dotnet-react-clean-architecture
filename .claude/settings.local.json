@@ -5,7 +5,10 @@
       "Bash(dotnet build:*)",
       "Bash(grep -v \"^$\")",
       "Bash(xargs grep:*)",
-      "Bash(dotnet ef:*)"
+      "Bash(dotnet ef:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)"
     ]
   }
 }

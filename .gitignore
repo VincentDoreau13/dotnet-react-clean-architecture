@@ -51,4 +51,12 @@ CodeCoverage/
 # NUnit
 *.VisualState.xml
 TestResult.xml
-nunit-*.xml
+nunit-*.xml# Claude Code local settings
+.claude/settings.local.json
+
+# Frontend
+src/front/node_modules/
+src/front/dist/
+src/front/.env.local
+src/front/.env.*.local
+src/front/tsconfig*.tsbuildinfo
