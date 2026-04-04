@@ -67,32 +67,35 @@ export default function CatalogPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                items.map((item) => (
+                items.map((catalogItem) => (
                   <TableRow
-                    key={item.id}
+                    key={catalogItem.id}
                     className="cursor-pointer"
                     role="button"
                     tabIndex={0}
-                    onClick={() => navigate(`/catalog/${item.id}`)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") navigate(`/catalog/${item.id}`)
+                    onClick={() => navigate(`/catalog/${catalogItem.id}`)}
+                    onKeyDown={(keyDownEvent) => {
+                      if (keyDownEvent.key === "Enter" || keyDownEvent.key === " ") {
+                        keyDownEvent.preventDefault()
+                        navigate(`/catalog/${catalogItem.id}`)
+                      }
                     }}
-                    aria-label={`View ${item.name}`}
+                    aria-label={`View ${catalogItem.name}`}
                   >
-                    <TableCell className="font-medium">{item.name}</TableCell>
+                    <TableCell className="font-medium">{catalogItem.name}</TableCell>
                     <TableCell className="hidden md:table-cell text-muted-foreground max-w-xs truncate">
-                      {item.description}
+                      {catalogItem.description}
                     </TableCell>
                     <TableCell className="text-right font-mono">
-                      {item.price.toFixed(2)} €
+                      {catalogItem.price.toFixed(2)} €
                     </TableCell>
                     <TableCell className="text-right">
-                      <Badge variant={item.availableStock > 0 ? "default" : "destructive"}>
-                        {item.availableStock}
+                      <Badge variant={catalogItem.availableStock > 0 ? "default" : "destructive"}>
+                        {catalogItem.availableStock}
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden sm:table-cell text-right text-muted-foreground text-sm">
-                      {new Date(item.createdAt).toLocaleDateString()}
+                      {new Date(catalogItem.createdAt).toLocaleDateString()}
                     </TableCell>
                   </TableRow>
                 ))

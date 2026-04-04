@@ -4,7 +4,7 @@ services:
   shopapi:
     image: shopapi:latest
     build:
-      context: .
+      context: src/back
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
@@ -15,6 +15,19 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - shop-network
+
+  shopfront:
+    image: shopfront:latest
+    build:
+      context: src/front
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - shopapi
     restart: unless-stopped
     networks:
       - shop-network

@@ -5,6 +5,7 @@ export interface CatalogItemDto {
   price: number
   availableStock: number
   createdAt: string
+  updatedAt: string
 }
 
 export interface CreateCatalogItemCommand {
@@ -12,4 +13,15 @@ export interface CreateCatalogItemCommand {
   description: string
   price: number
   availableStock: number
+}
+
+/**
+ * ASP.NET Core ProblemDetails shape returned by CustomErrorHandlerHelper.
+ * ValidationException errors include field messages under extensions.validations[].
+ */
+export interface ApiProblemDetails {
+  title?: string
+  detail?: string
+  status?: number
+  extensions?: { validations?: string[] }
 }

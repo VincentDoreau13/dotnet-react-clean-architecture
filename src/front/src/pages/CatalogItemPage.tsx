@@ -11,10 +11,13 @@ export default function CatalogItemPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const itemId = Number(id)
-  const isValidId = id !== undefined && !isNaN(itemId) && itemId > 0
+  const isValidId = id !== undefined && Number.isInteger(itemId) && itemId > 0
+  // Use null in the query key when the ID is invalid so the key is stable
+  // across renders (NaN !== NaN causes a new cache entry every render).
+  const stableId = isValidId ? itemId : null
 
   const { data: item, isLoading, isError } = useQuery({
-    queryKey: ["catalog-item", itemId],
+    queryKey: ["catalog-item", stableId],
     queryFn: () => catalogApi.getItemById(itemId),
     enabled: isValidId,
   })

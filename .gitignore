@@ -59,3 +59,4 @@ src/front/node_modules/
 src/front/dist/
 src/front/.env.local
 src/front/.env.*.local
+src/front/tsconfig*.tsbuildinfo

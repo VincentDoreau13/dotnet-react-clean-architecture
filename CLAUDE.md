@@ -120,3 +120,11 @@ Stack: Vite + React 18 + TypeScript + shadcn/ui (Tailwind CSS + Radix UI) + TanS
 The Vite dev server proxies `/api` → `$VITE_API_URL` (default `http://localhost:5080`). Copy `.env.example` to `.env.local` to override.
 
 Error responses from the API follow the ASP.NET Core `ProblemDetails` shape. `ValidationException` errors include field-level messages under `extensions.validations[]`.
+
+## Coding Conventions
+
+All code in this repository — C# and TypeScript alike — follows these mandatory rules:
+
+- **Lambda / callback parameter names** — must be explicit and self-documenting. Single letters (`x`, `e`, `r`, `v`, `i`…) and generic names (`item`, `obj`, `data`, `res`, `cb`) are forbidden. See skills `dotnet-lambda-naming` (C#) and `react-lambda-naming` (TypeScript/React).
+- **Method / function parameter names** — must be fully spelled out. No abbreviations (`ct`, `req`, `cmd`, `opts`…). See skill `parameter-naming`.
+- **No `any` in TypeScript** — use `unknown` with type guards, proper generics, or concrete types. `as any`, `any[]`, and implicit `any` are all forbidden. See skill `react-no-any`.

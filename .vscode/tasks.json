@@ -1,6 +1,7 @@
 {
   "version": "2.0.0",
   "tasks": [
+    // ─── Backend ──────────────────────────────────────────────────────────────
     {
       "label": "back: build",
       "command": "dotnet",
@@ -29,6 +30,55 @@
       ],
       "problemMatcher": "$msCompile",
       "isBackground": true
+    },
+    // ─── Frontend ─────────────────────────────────────────────────────────────
+    {
+      "label": "front: install",
+      "type": "shell",
+      "command": "npm install",
+      "options": {
+        "cwd": "${workspaceFolder}/src/front"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "front: dev",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/src/front"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "vite",
+        "pattern": {
+          "regexp": "^(.*)$",
+          "message": 1
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "VITE",
+          "endsPattern": "ready in"
+        }
+      }
+    },
+    {
+      "label": "front: build",
+      "type": "shell",
+      "command": "npm run build",
+      "options": {
+        "cwd": "${workspaceFolder}/src/front"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "front: typecheck",
+      "type": "shell",
+      "command": "npm run typecheck",
+      "options": {
+        "cwd": "${workspaceFolder}/src/front"
+      },
+      "problemMatcher": "$tsc"
     }
   ]
 }

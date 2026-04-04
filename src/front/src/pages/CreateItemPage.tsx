@@ -17,16 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import Layout from "@/components/Layout"
-import { catalogApi } from "@/api/catalog"
-import type { AxiosError } from "axios"
-
-// Matches the ASP.NET Core ProblemDetails shape returned by CustomErrorHandlerHelper.
-// ValidationException adds field errors under extensions.validations[].
-type ApiProblemDetails = {
-  title?: string
-  detail?: string
-  extensions?: { validations?: string[] }
-}
+import { catalogApi, isApiError } from "@/api/catalog"
 
 const schema = z.object({
   name: z.string().min(1, "Name is required").max(200, "Max 200 characters"),
@@ -43,20 +34,21 @@ export default function CreateItemPage() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", description: "", price: "" as unknown as number, availableStock: 0 },
+    defaultValues: { name: "", description: "", price: undefined, availableStock: 0 },
   })
 
   const { mutate, isPending, isError, error } = useMutation({
     mutationFn: catalogApi.createItem,
-    onSuccess: (item) => {
+    onSuccess: (createdItem) => {
       queryClient.invalidateQueries({ queryKey: ["catalog-items"] })
-      navigate(`/catalog/${item.id}`)
+      navigate(`/catalog/${createdItem.id}`)
     },
   })
 
-  const apiError = (error as AxiosError<ApiProblemDetails> | null)?.response?.data
-  const apiValidations = apiError?.extensions?.validations
-  const apiErrorMessage = apiError?.detail ?? apiError?.title ?? "Failed to create item. Please try again."
+  const apiProblem = isApiError(error) ? error.response?.data : undefined
+  const apiValidations = apiProblem?.extensions?.validations
+  const apiErrorMessage =
+    apiProblem?.detail ?? apiProblem?.title ?? "Failed to create item. Please try again."
 
   return (
     <Layout>
@@ -147,8 +139,8 @@ export default function CreateItemPage() {
                     <p>{apiErrorMessage}</p>
                     {apiValidations && apiValidations.length > 0 && (
                       <ul className="list-disc list-inside">
-                        {apiValidations.map((msg) => (
-                          <li key={msg}>{msg}</li>
+                        {apiValidations.map((validationMessage, validationIndex) => (
+                          <li key={validationIndex}>{validationMessage}</li>
                         ))}
                       </ul>
                     )}

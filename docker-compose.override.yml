@@ -1,0 +1,29 @@
+version: "3.9"
+
+# Overrides pour le développement local avec hot reload.
+# Usage : docker-compose up
+services:
+  shopapi:
+    build:
+      context: src/back
+      dockerfile: Dockerfile.dev
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - UseInMemoryDatabase=false
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=shop_api;Username=postgres;Password=postgres
+    volumes:
+      - ./src/back:/src
+    restart: "no"
+
+  shopfront:
+    build:
+      context: src/front
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src/front:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://shopapi:8080
+    restart: "no"

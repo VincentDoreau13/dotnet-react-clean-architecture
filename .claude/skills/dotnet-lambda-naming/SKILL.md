@@ -1,5 +1,5 @@
 ---
-name: efcore-lambda-naming
+name: dotnet-lambda-naming
 description: Enforce descriptive lambda parameter names everywhere in C# — no single-character or opaque params like x, c, e, p, t, item
 ---
 
