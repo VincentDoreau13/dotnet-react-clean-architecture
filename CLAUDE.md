@@ -4,11 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Clean Architecture template — .NET 10 backend API (`src/back/`) with PostgreSQL. React frontend not yet implemented.
+Clean Architecture template — .NET 10 backend API (`src/back/`) with PostgreSQL + React 18 frontend (`src/front/`) with shadcn/ui.
 
 ## Commands
 
-All commands run from `src/back/`:
+### Frontend (`src/front/`)
+
+```bash
+npm install        # install deps (first time)
+npm run dev        # dev server on http://localhost:3000 (proxies /api → :5080)
+npm run build      # production build
+```
+
+The Vite dev server proxies all `/api` requests to the .NET API at `http://localhost:5080`.
+
+### Backend — all commands run from `src/back/`:
 
 ```bash
 # Restore & build
@@ -85,3 +95,28 @@ Global error handler is in `API/Errors/CustomErrorHandlerHelper.cs`, registered 
 ## CI
 
 `.github/workflows/back-ci.yml` triggers on push/PR to `master`/`develop` when `src/back/**` changes. Steps: restore → build Release → Docker build (no push).
+
+No frontend CI workflow exists yet. When adding one, the minimum steps should be:
+
+```bash
+cd src/front
+npm ci
+npm run typecheck
+npm run build
+```
+
+## Frontend Architecture
+
+Stack: Vite + React 18 + TypeScript + shadcn/ui (Tailwind CSS + Radix UI) + TanStack Query + React Hook Form + Zod.
+
+| Layer | Folder | Responsibility |
+|---|---|---|
+| API client | `src/api/` | Axios wrappers for each backend endpoint |
+| Types | `src/types/` | DTO types mirroring the backend response shapes |
+| UI primitives | `src/components/ui/` | shadcn/ui components (button, card, table, form, …) |
+| Layout | `src/components/Layout.tsx` | Shell with top nav |
+| Pages | `src/pages/` | CatalogPage, CatalogItemPage, CreateItemPage |
+
+The Vite dev server proxies `/api` → `$VITE_API_URL` (default `http://localhost:5080`). Copy `.env.example` to `.env.local` to override.
+
+Error responses from the API follow the ASP.NET Core `ProblemDetails` shape. `ValidationException` errors include field-level messages under `extensions.validations[]`.
