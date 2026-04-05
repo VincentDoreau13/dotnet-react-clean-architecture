@@ -1,167 +1,99 @@
 # dotnet-react-clean-architecture
 
-A production-ready starter template combining a **.NET 10 Clean Architecture API** with a **React 18 frontend** — batteries included.
+A production-ready starter template combining a **.NET 10 Clean Architecture API** with a **React 18 frontend**, built with [Claude Code](https://claude.ai/code).
 
 [![Back-end CI](https://github.com/VincentDoreau13/dotnet-react-clean-architecture/actions/workflows/back-ci.yml/badge.svg)](https://github.com/VincentDoreau13/dotnet-react-clean-architecture/actions/workflows/back-ci.yml)
 [![Front-end CI](https://github.com/VincentDoreau13/dotnet-react-clean-architecture/actions/workflows/front-ci.yml/badge.svg)](https://github.com/VincentDoreau13/dotnet-react-clean-architecture/actions/workflows/front-ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
----
 
-## Stack
+## Purpose
 
-| Layer | Technology |
-|---|---|
-| **API** | .NET 10 · ASP.NET Core · MediatR (CQRS) · FluentValidation · Autofac |
-| **Database** | PostgreSQL 17 · EF Core (code-first migrations) |
-| **Frontend** | React 18 · TypeScript · Vite · shadcn/ui · TanStack Query · React Hook Form · Zod |
-| **Infra** | Docker · Docker Compose · nginx |
-| **CI** | GitHub Actions |
+This template demonstrates how to build and evolve a full-stack application using **Claude Code as the primary development tool**. The codebase serves as a reference for Clean Architecture on .NET with a React frontend — every feature is implemented and reviewed through slash commands, not by hand.
 
----
 
 ## Architecture
 
-The backend follows **Clean Architecture** with four layers in a single project:
+### Backend — Clean Architecture (.NET 10)
+
+Four layers in a single project (`src/back/`):
+
+| Layer | Folder | Responsibility |
+|---|---|---|
+| Domain | `Domain/` | Entities, domain events — no external dependencies |
+| Application | `Application/` | CQRS handlers (MediatR), DTOs, FluentValidation validators |
+| Infrastructure | `Infrastructure/` | EF Core + PostgreSQL, repositories, Autofac DI |
+| API | `API/` | ASP.NET Core controllers, global error handler |
+
+Key patterns: CQRS via MediatR · Repository pattern · Pipeline behaviors (logging → validation → transaction) · Domain events dispatched inside `SaveChangesAsync`.
+
+### Frontend — React 18 SPA (`src/front/`)
+
+| Folder | Responsibility |
+|---|---|
+| `src/api/` | Axios wrappers per feature, shared `apiClient` |
+| `src/types/` | DTO interfaces mirroring backend response shapes |
+| `src/components/` | shadcn/ui primitives + Layout shell |
+| `src/pages/` | One page component per route |
+
+Stack: Vite · TypeScript · shadcn/ui · TanStack Query · React Hook Form · Zod.
+
+
+## Adding a Feature
+
+Features are implemented and reviewed entirely via Claude Code slash commands.
+
+### 1. Implement
 
 ```
-Domain         — Entities, domain events, value objects. Zero external dependencies.
-Application    — CQRS handlers (MediatR), DTOs, validators (FluentValidation).
-Infrastructure — EF Core + PostgreSQL, repositories, Autofac DI module.
-API            — ASP.NET Core controllers, global error handler.
+/add-feature
 ```
 
-Key patterns: CQRS via MediatR · Repository pattern · Pipeline behaviors (logging → validation → transaction) · Domain events · Strategy pattern on DbContext.
+Scaffolds the full feature end-to-end: Domain → Application → Infrastructure → API → Frontend.
 
-The frontend is a lightweight React SPA:
+### 2. Review
 
 ```
-src/api/        — Axios wrappers, type guards (isApiError)
-src/types/      — DTO interfaces mirroring backend response shapes
-src/components/ — shadcn/ui primitives + Layout shell
-src/pages/      — CatalogPage · CatalogItemPage · CreateItemPage
+/code-review
 ```
 
----
+Reviews the current branch for correctness, type safety, security, and pattern compliance. Pass a PR number to post the review directly to GitHub.
 
-## Getting Started
+### Convention skills (enforced automatically)
 
-### Prerequisites
+| Skill | Rule |
+|---|---|
+| `dotnet-lambda-naming` | Explicit lambda parameter names in C# — no `x`, `e`, `r`, `i` |
+| `react-lambda-naming` | Explicit callback parameter names in TypeScript/React |
+| `parameter-naming` | Fully spelled-out method/function parameters — no `ct`, `req`, `cmd` |
+| `react-no-any` | No `any` in TypeScript — concrete types, generics, or `unknown` |
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- [Node.js 22+](https://nodejs.org/)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
-### Run with Docker (recommended)
+## Running locally
 
 ```bash
-# Production — postgres + API + React served by nginx on :80
 docker-compose up --build
-
-# Development — hot reload for both API (dotnet watch) and frontend (Vite)
-docker-compose up
 ```
 
 | Service | URL |
 |---|---|
 | Frontend | http://localhost |
-| API (prod) | http://localhost:8080 |
-| API (dev) | http://localhost:5080 |
-| Swagger UI | http://localhost:8080 or http://localhost:5080 |
+| API + Swagger | http://localhost:8080 |
 | PostgreSQL | localhost:5432 |
 
-### Run locally
-
-**Backend:**
+For hot reload (API + frontend):
 
 ```bash
-cd src/back
-dotnet restore
-dotnet watch run   # hot reload on http://localhost:5080, in-memory DB
+docker-compose -f docker-compose.yml -f docker-compose.override.yml up
 ```
 
-**Frontend:**
 
-```bash
-cd src/front
-npm install
-npm run dev        # http://localhost:3000, proxies /api → :5080
-```
+## Contributing
 
-**VS Code:** use the **"Full Stack"** compound launch configuration to start both with a single `F5`.
+1. Fork the repository and create a branch from `master`.
+2. Use `/add-feature` to implement your change and `/code-review` to validate it.
+3. Open a pull request against `master` — the `pr-ci.yml` workflow runs backend and frontend checks in parallel. The **`all-checks`** status must pass before merge.
 
----
-
-## Project Structure
-
-```
-/
-├── docker-compose.yml          # Production stack (postgres + API + front)
-├── docker-compose.override.yml # Dev overrides (hot reload)
-├── src/
-│   ├── back/                   # .NET API
-│   │   ├── API/                # Controllers, error handler
-│   │   ├── Application/        # CQRS handlers, DTOs, validators
-│   │   ├── Domain/             # Entities, domain events
-│   │   ├── Infrastructure/     # EF Core, repositories, Autofac module
-│   │   ├── Dockerfile
-│   │   └── Dockerfile.dev
-│   └── front/                  # React SPA
-│       ├── src/
-│       │   ├── api/
-│       │   ├── components/
-│       │   ├── pages/
-│       │   └── types/
-│       ├── Dockerfile
-│       ├── Dockerfile.dev
-│       └── nginx.conf
-└── .github/
-    └── workflows/
-        ├── back-ci.yml         # Backend CI (build + Docker)
-        ├── front-ci.yml        # Frontend CI (typecheck + build + Docker)
-        └── pr-ci.yml           # PR quality gate (both stacks, required check)
-```
-
----
-
-## Database Migrations
-
-```bash
-cd src/back
-
-# Add a migration
-dotnet ef migrations add <MigrationName>
-
-# Apply to the database
-dotnet ef database update
-```
-
-> In `Development` mode (`UseInMemoryDatabase=true`) migrations are not applied — the in-memory DB is seeded on first run automatically.
-
----
-
-## Adding a Feature
-
-1. Add entity / value object in `Domain/`
-2. Add query or command + handler + validator in `Application/<Feature>/`
-3. Add EF configuration in `Infrastructure/Data/Configurations/`
-4. Add repository interface + implementation in `Infrastructure/Repositories/`
-5. Register in `Infrastructure/AutofacModules/InfrastructureModule.cs`
-6. Add controller action in `API/Controllers/`
-
----
-
-## CI / CD
-
-| Workflow | Trigger | Jobs |
-|---|---|---|
-| `back-ci.yml` | Push / PR on `src/back/**` | Restore → Build → Docker build |
-| `front-ci.yml` | Push / PR on `src/front/**` | Install → Typecheck → Build → Docker build |
-| `pr-ci.yml` | Every PR to `master` / `develop` | Back + Front in parallel → `all-checks` gate |
-
-Set **`all-checks`** (from `pr-ci.yml`) as the required status check in your branch protection rules.
-
----
 
 ## License
 

@@ -24,6 +24,15 @@ export default function Layout({ children }: { children: ReactNode }) {
             >
               Catalog
             </Link>
+            <Link
+              to="/orders"
+              className={cn(
+                "text-muted-foreground hover:text-foreground transition-colors",
+                pathname.startsWith("/orders") && "text-foreground font-medium"
+              )}
+            >
+              Orders
+            </Link>
           </nav>
         </div>
       </header>
