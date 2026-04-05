@@ -1,10 +1,13 @@
 import type { ReactNode } from "react"
 import { Link, useLocation } from "react-router-dom"
-import { ShoppingBag } from "lucide-react"
+import { ShoppingBag, LogOut } from "lucide-react"
+import { useAuth0 } from "@auth0/auth0-react"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 export default function Layout({ children }: { children: ReactNode }) {
   const { pathname } = useLocation()
+  const { user, logout } = useAuth0()
 
   return (
     <div className="min-h-screen bg-background">
@@ -34,6 +37,20 @@ export default function Layout({ children }: { children: ReactNode }) {
               Orders
             </Link>
           </nav>
+
+          <div className="ml-auto flex items-center gap-3">
+            <span className="text-sm text-muted-foreground">
+              {user?.name ?? user?.email}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </Button>
+          </div>
         </div>
       </header>
       <main className="container py-8">{children}</main>

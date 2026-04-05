@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ShopApi.Application.Catalog.Commands.CreateCatalogItem;
 using ShopApi.Application.Catalog.DTOs;
@@ -8,6 +9,7 @@ using ShopApi.Application.Catalog.Queries.GetCatalogItems;
 namespace ShopApi.API.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/catalog")]
 [Produces("application/json")]
 public class CatalogController(IMediator mediator) : ControllerBase

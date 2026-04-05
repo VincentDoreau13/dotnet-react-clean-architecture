@@ -13,6 +13,8 @@ public class CatalogItem : BaseEntity, IAuditable
     public int AvailableStock { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime UpdatedAt { get; private set; }
+    public string? CreatedBy { get; private set; }
+    public string? UpdatedBy { get; private set; }
 
     public static CatalogItem Create(string name, string description, decimal price, int availableStock) =>
         new()

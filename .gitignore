@@ -60,3 +60,7 @@ src/front/dist/
 src/front/.env.local
 src/front/.env.*.local
 src/front/tsconfig*.tsbuildinfo
+
+# Backend — local overrides with secrets
+src/back/appsettings.Development.json
+src/back/appsettings.*.local.json

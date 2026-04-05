@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ShopApi.Application.Orders.Commands.CreateOrder;
 using ShopApi.Application.Orders.Commands.DeleteOrder;
@@ -9,6 +10,7 @@ using ShopApi.Application.Orders.Queries.GetOrders;
 namespace ShopApi.API.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/orders")]
 [Produces("application/json")]
 public class OrdersController(IMediator mediator) : ControllerBase

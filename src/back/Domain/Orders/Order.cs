@@ -12,6 +12,8 @@ public class Order : BaseEntity, IAuditable
     public IReadOnlyCollection<OrderItem> Items => _items.AsReadOnly();
     public DateTime CreatedAt { get; private set; }
     public DateTime UpdatedAt { get; private set; }
+    public string? CreatedBy { get; private set; }
+    public string? UpdatedBy { get; private set; }
 
     public static Order Create(IEnumerable<(int CatalogItemId, int Quantity, decimal UnitPrice)> lines)
     {

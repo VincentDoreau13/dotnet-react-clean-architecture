@@ -4,50 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Clean Architecture template — .NET 10 backend API (`src/back/`) with PostgreSQL + React 18 frontend (`src/front/`) with shadcn/ui.
-
-## Commands
-
-### Frontend (`src/front/`)
-
-```bash
-npm install        # install deps (first time)
-npm run dev        # dev server on http://localhost:3000 (proxies /api → :5080)
-npm run build      # production build
-```
-
-The Vite dev server proxies all `/api` requests to the .NET API at `http://localhost:5080`.
-
-### Backend — all commands run from `src/back/`:
-
-```bash
-# Restore & build
-dotnet restore
-dotnet build
-
-# Run with hot reload (uses in-memory DB by default in Development)
-dotnet watch run
-
-# Docker — production (PostgreSQL)
-docker-compose up --build
-
-# Docker — development with hot reload
-docker-compose -f docker-compose.yml -f docker-compose.override.yml up
-
-# Migrations
-dotnet ef migrations add <MigrationName>
-dotnet ef database update
-```
-
-The VSCode launch profile "Back — ShopApi (Development)" runs with `UseInMemoryDatabase=true` on `https://localhost:7080` / `http://localhost:5080`. Swagger UI is served at `/`.
+Clean Architecture template — .NET 10 backend API (`src/back/`) with PostgreSQL + React 18 frontend (`src/front/`). Authentication via **Auth0 JWT** (RS256 bearer token).
 
 ## Architecture
 
-Four layers, all in a single `ShopApi.csproj` (no separate class library projects):
+Four layers, all in a single `ShopApi.csproj`:
 
 | Layer | Folder | Responsibility |
 |---|---|---|
-| Domain | `Domain/` | Entities, domain events, enumerations, exceptions — no external dependencies |
+| Domain | `Domain/` | Entities, domain events, exceptions — no external dependencies |
 | Application | `Application/` | CQRS handlers (MediatR), DTOs, FluentValidation validators, pipeline behaviors |
 | Infrastructure | `Infrastructure/` | EF Core + PostgreSQL, repositories, Autofac DI module |
 | API | `API/` | ASP.NET Core controllers, global error handler |
@@ -55,76 +20,116 @@ Four layers, all in a single `ShopApi.csproj` (no separate class library project
 ### Key patterns
 
 - **CQRS via MediatR** — requests in `Application/[Feature]/Queries|Commands/`, dispatched from controllers via `IMediator`.
-- **MediatR pipeline behaviors** (registered in order): `LoggingBehavior` → `ValidationBehavior` → `TransactionBehaviour`.
-- **Repository pattern** — `IRepository<T>` / `EfRepository<T>` base; feature-specific interfaces (e.g. `ICatalogRepository`) extend it.
-- **Autofac** is the DI container; `InfrastructureModule` (`Infrastructure/AutofacModules/`) registers repositories and services.
-- **Strategy pattern on DbContext** — `IModelCreatingDbContextStrategy` and `IBeforeSavingDbContextStrategy` let features plug into EF model building and save logic without modifying `AppDbContext`.
+- **Pipeline behaviors** (in order): `LoggingBehavior` → `ValidationBehavior` → `TransactionBehaviour`.
+- **Repository pattern** — `IRepository<T>` / `EfRepository<T>` base; feature interfaces extend it.
+- **Autofac** — DI container; `InfrastructureModule` registers repositories and services.
+- **DbContext strategies** — `IModelCreatingDbContextStrategy` and `IBeforeSavingDbContextStrategy` let features plug in without touching `AppDbContext`.
 - **Domain events** — dispatched inside `AppDbContext.SaveChangesAsync` via `MediatorExtension.DispatchDomainEventsAsync`.
-- **Dual DB mode** — `UseInMemoryDatabase` appsetting switches between in-memory (dev/test) and PostgreSQL (production). `TransactionBehaviour` skips transactions for in-memory.
+- **Dual DB mode** — `UseInMemoryDatabase` switches between in-memory (dev) and PostgreSQL (prod). `TransactionBehaviour` skips transactions for in-memory.
 
-### Adding a new feature
+### Adding a feature
 
-1. Add entity/value object in `Domain/`.
-2. Add query/command + handler + validator in `Application/<Feature>/`.
-3. Add EF configuration in `Infrastructure/Data/Configurations/`.
-4. Add repository interface + implementation in `Infrastructure/Repositories/`.
-5. Register new types in `Infrastructure/AutofacModules/InfrastructureModule.cs`.
-6. Add controller action in `API/Controllers/`.
+Use the `/add-feature` skill. It covers all layers end-to-end: Domain → Application → Infrastructure → Migration → API → Frontend.
 
 ## EF Core Conventions
 
-`AppDbContext` sets `ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking` globally — **ne jamais ajouter `.AsNoTracking()` dans les repositories**, c'est redondant. Utiliser `.AsTracking()` explicitement uniquement pour les opérations d'écriture qui nécessitent le tracking.
-
-`HasData` pour le seed utilise des **types anonymes** (pas `new CatalogItem { ... }`) afin d'être compatible avec les setters privés des entités.
+- `AppDbContext` sets `QueryTrackingBehavior.NoTracking` globally — **never add `.AsNoTracking()` in repositories**. Use `.AsTracking()` only for write operations that need change tracking.
+- `HasData` seed uses **anonymous types** (not `new Entity { ... }`) to be compatible with private setters. Nullable fields can be omitted — EF inserts `null` by default.
 
 ## Error Handling
 
-Global error handler is in `API/Errors/CustomErrorHandlerHelper.cs`, registered via `ApplicationBuilderExtensions`. It maps:
-- `NotFoundException` → 404
-- `FunctionalException` → 400 (with validation-style error payload)
-- Unhandled → 500
+Global handler in `API/Errors/CustomErrorHandlerHelper.cs`:
+
+| Exception | HTTP |
+|---|---|
+| `NotFoundException` | 404 |
+| `FunctionalException` | 400 |
+| Unhandled | 500 |
+
+Throw from handlers or domain objects — never catch in controllers.
+
+## Authentication — Auth0 JWT
+
+All endpoints use `[Authorize]`. Backend validates via `Authority` + `Audience`.
+
+Configuration keys (required at startup — app throws if empty):
+
+| Key | Example |
+|---|---|
+| `Auth0:Domain` | `dev-xxx.eu.auth0.com` |
+| `Auth0:Audience` | `https://shop-api` |
+
+Set in `appsettings.Development.json` (git-ignored). Copy from `appsettings.Development.example.json`. For first-time Auth0 dashboard setup, use the `/auth0-setup` skill.
+
+### IIdentityService
+
+Inject `IIdentityService` in any handler to access the current user:
+
+- `GetUserIdentity()` — claim `sub` or `client_id`
+- `GetUsername()` — claim `name` or `Identity.Name`, defaults to `"System"`
+- `GetTraceId()` — `TraceIdentifier` or `Activity.Current`
+- `GetRoles()` — claims of type `role`
+
+### Audit fields (IAuditable)
+
+`CreatedAt`, `UpdatedAt`, `CreatedBy`, `UpdatedBy` are populated automatically by `MustHaveAuditableBeforeSavingStrategy` before each save. **Never set them manually** in entities or handlers. `CreatedBy`/`UpdatedBy` are set only on `Added` and `Modified` states — never on `Deleted`.
 
 ## Configuration
 
 | Setting | Development | Production |
 |---|---|---|
 | `UseInMemoryDatabase` | `true` | `false` |
-| Database | In-memory | PostgreSQL (`Host=postgres;Database=shop_api`) |
-| Swagger | Enabled | Enabled (Docker env) |
+| `Auth0:Domain` / `Auth0:Audience` | `appsettings.Development.json` | Environment variable |
+| `ConnectionStrings:DefaultConnection` | User Secrets | `ConnectionStrings__DefaultConnection` env var |
+| Swagger | Enabled (`IsDevelopment()`) | Disabled |
 
-## CI
+## Security
 
-`.github/workflows/back-ci.yml` triggers on push/PR to `master`/`develop` when `src/back/**` changes. Steps: restore → build Release → Docker build (no push).
-
-No frontend CI workflow exists yet. When adding one, the minimum steps should be:
-
-```bash
-cd src/front
-npm ci
-npm run typecheck
-npm run build
-```
+- Rate limiting: 100 req/min per IP (fixed window) — HTTP 429 on excess.
+- Security headers on every response: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`.
+- CORS: set `AllowedOrigins` to exact URLs in production — no wildcard `*`.
+- Never commit `appsettings.Development.json` or `src/front/.env.local` — both are git-ignored.
 
 ## Frontend Architecture
 
-Stack: Vite + React 18 + TypeScript + shadcn/ui (Tailwind CSS + Radix UI) + TanStack Query + React Hook Form + Zod.
+Stack: Vite + React 18 + TypeScript + shadcn/ui + TanStack Query + React Hook Form + Zod + @auth0/auth0-react.
 
-| Layer | Folder | Responsibility |
-|---|---|---|
-| API client | `src/api/` | Axios wrappers for each backend endpoint |
-| Types | `src/types/` | DTO types mirroring the backend response shapes |
-| UI primitives | `src/components/ui/` | shadcn/ui components (button, card, table, form, …) |
-| Layout | `src/components/Layout.tsx` | Shell with top nav |
-| Pages | `src/pages/` | CatalogPage, CatalogItemPage, CreateItemPage |
+| Folder | Responsibility |
+|---|---|
+| `src/auth/` | `AuthGuard` (redirect if not authenticated), `AxiosInterceptor` (attaches Bearer token) |
+| `src/api/` | Axios wrappers per feature |
+| `src/types/` | DTO interfaces mirroring backend shapes |
+| `src/components/` | shadcn/ui primitives + Layout shell |
+| `src/pages/` | One component per route |
 
-The Vite dev server proxies `/api` → `$VITE_API_URL` (default `http://localhost:5080`). Copy `.env.example` to `.env.local` to override.
+Auth flow: `Auth0Provider` → `AuthGuard` → `AxiosInterceptor` → Routes. `AxiosInterceptor` uses a `ready` state to block API calls until the Bearer interceptor is registered — prevents race conditions on F5 refresh.
 
-Error responses from the API follow the ASP.NET Core `ProblemDetails` shape. `ValidationException` errors include field-level messages under `extensions.validations[]`.
+Frontend env vars go in `src/front/.env.local` (copy from `.env.example`): `VITE_AUTH0_DOMAIN`, `VITE_AUTH0_CLIENT_ID`, `VITE_AUTH0_AUDIENCE`, `VITE_API_URL`.
+
+Error responses follow the `ProblemDetails` shape. `ValidationException` includes field-level messages under `extensions.validations[]`.
+
+## CI
+
+- Backend: `.github/workflows/back-ci.yml` — restore → build Release → Docker build, triggers on `src/back/**` changes.
+- Frontend: `.github/workflows/front-ci.yml` — `npm ci` → typecheck → build, triggers on `src/front/**` changes.
+- PR: `.github/workflows/pr-ci.yml` — runs both in parallel, `all-checks` job must pass before merge.
+
+## Migrations
+
+Run from `src/back/`:
+
+```bash
+dotnet ef migrations add <MigrationName> --project ShopApi.csproj
+dotnet ef database update --project ShopApi.csproj   # PostgreSQL only
+```
+
+In-memory mode rebuilds the schema at startup — no migration needed.
 
 ## Coding Conventions
 
-All code in this repository — C# and TypeScript alike — follows these mandatory rules:
+Mandatory across all C# and TypeScript code:
 
-- **Lambda / callback parameter names** — must be explicit and self-documenting. Single letters (`x`, `e`, `r`, `v`, `i`…) and generic names (`item`, `obj`, `data`, `res`, `cb`) are forbidden. See skills `dotnet-lambda-naming` (C#) and `react-lambda-naming` (TypeScript/React).
-- **Method / function parameter names** — must be fully spelled out. No abbreviations (`ct`, `req`, `cmd`, `opts`…). See skill `parameter-naming`.
-- **No `any` in TypeScript** — use `unknown` with type guards, proper generics, or concrete types. `as any`, `any[]`, and implicit `any` are all forbidden. See skill `react-no-any`.
+- **Lambda / callback params** — explicit, self-documenting names. No `x`, `e`, `r`, `v`, `i`, `item`, `obj`. → skills `dotnet-lambda-naming`, `react-lambda-naming`.
+- **Method / function params** — fully spelled out. No `ct`, `req`, `cmd`, `opts`. → skill `parameter-naming`.
+- **No `any` in TypeScript** — use concrete types, generics, or `unknown`. → skill `react-no-any`.
+- **Unnecessary `using` directives** — remove usings already covered by implicit usings of `Microsoft.NET.Sdk.Web`. → skill `dotnet-remove-usings`.
