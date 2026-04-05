@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using ShopApi.Application.Common.Interfaces;
 using ShopApi.Domain.Catalog;
 using ShopApi.Domain.Common;
+using ShopApi.Domain.Orders;
 using ShopApi.Infrastructure.Strategies;
 
 namespace ShopApi.Infrastructure.Data;
@@ -39,6 +40,8 @@ public class AppDbContext : DbContext, IUnitOfWork
     public bool HasActiveTransaction => _currentTransaction != null;
 
     public DbSet<CatalogItem> CatalogItems => Set<CatalogItem>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
 
     public IDbContextTransaction? GetCurrentTransaction() => _currentTransaction;
 

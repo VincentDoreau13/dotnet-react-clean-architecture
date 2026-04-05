@@ -1,16 +1,7 @@
-import axios from "axios"
-import type { AxiosError } from "axios"
-import type { CatalogItemDto, CreateCatalogItemCommand, ApiProblemDetails } from "@/types/catalog"
+import type { CatalogItemDto, CreateCatalogItemCommand } from "@/types/catalog"
+import { apiClient } from "@/api/client"
 
-export const apiClient = axios.create({ baseURL: "/api" })
-
-/**
- * Narrows an unknown catch value to a typed Axios error carrying
- * the backend's ProblemDetails payload.
- */
-export function isApiError(err: unknown): err is AxiosError<ApiProblemDetails> {
-  return axios.isAxiosError(err)
-}
+export { isApiError } from "@/api/client"
 
 export const catalogApi = {
   getItems: (): Promise<CatalogItemDto[]> =>

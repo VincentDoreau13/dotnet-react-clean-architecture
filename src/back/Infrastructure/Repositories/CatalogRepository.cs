@@ -14,4 +14,10 @@ public class CatalogRepository(AppDbContext context) : EfRepository<CatalogItem>
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<CatalogItem>> GetItemsByIdsAsync(IReadOnlyList<int> ids, CancellationToken cancellationToken = default)
+    {
+        return await DbSet
+            .Where(catalogItem => ids.Contains(catalogItem.Id))
+            .ToListAsync(cancellationToken);
+    }
 }

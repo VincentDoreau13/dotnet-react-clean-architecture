@@ -1,4 +1,5 @@
 using ShopApi.Domain.Common;
+using ShopApi.Domain.Exceptions;
 
 namespace ShopApi.Domain.Catalog;
 
@@ -21,4 +22,13 @@ public class CatalogItem : BaseEntity, IAuditable
             Price = price,
             AvailableStock = availableStock,
         };
+
+    public void RemoveStock(int quantity)
+    {
+        if (AvailableStock - quantity < 0)
+            throw new FunctionalException("INSUFFICIENT_STOCK",
+                $"Not enough stock for '{Name}'. Available: {AvailableStock}, requested: {quantity}.");
+
+        AvailableStock -= quantity;
+    }
 }
