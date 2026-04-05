@@ -4,10 +4,10 @@ using ShopApi.Domain.Exceptions;
 
 namespace ShopApi.Application.Orders.Commands.DeleteOrder;
 
-public class DeleteOrderCommandHandler(IOrderRepository orderRepository)
-    : IRequestHandler<DeleteOrderCommand>
+public class DeleteOrderHandler(IOrderRepository orderRepository)
+    : IRequestHandler<DeleteOrderCommand, Unit>
 {
-    public async Task Handle(DeleteOrderCommand command, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(DeleteOrderCommand command, CancellationToken cancellationToken)
     {
         var order = await orderRepository.GetOrderWithItemsByIdAsync(command.Id, cancellationToken)
             ?? throw new NotFoundException("NOT_FOUND", "Order", command.Id);
@@ -16,5 +16,7 @@ public class DeleteOrderCommandHandler(IOrderRepository orderRepository)
 
         orderRepository.Delete(order);
         await orderRepository.SaveEntitiesAsync(cancellationToken);
+
+        return Unit.Value;
     }
 }

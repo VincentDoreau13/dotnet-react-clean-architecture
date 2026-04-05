@@ -4,9 +4,9 @@ using ShopApi.Application.Catalog.Interfaces;
 namespace ShopApi.Application.Catalog.Commands.UpdateCatalogItemStock;
 
 public class UpdateCatalogItemStockHandler(ICatalogRepository repository)
-    : IRequestHandler<UpdateCatalogItemStockCommand>
+    : IRequestHandler<UpdateCatalogItemStockCommand, Unit>
 {
-    public async Task Handle(UpdateCatalogItemStockCommand command, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(UpdateCatalogItemStockCommand command, CancellationToken cancellationToken)
     {
         var item = await repository.GetByIdAsync(command.Id, cancellationToken);
 
@@ -14,5 +14,7 @@ public class UpdateCatalogItemStockHandler(ICatalogRepository repository)
 
         repository.Update(item);
         await repository.SaveEntitiesAsync(cancellationToken);
+
+        return Unit.Value;
     }
 }

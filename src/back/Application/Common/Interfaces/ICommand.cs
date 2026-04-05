@@ -2,6 +2,6 @@ using MediatR;
 
 namespace ShopApi.Application.Common.Interfaces;
 
-public interface ICommand : IRequest;
+public interface ICommand : ICommand<Unit>;
 
 public interface ICommand<TResponse> : IRequest<TResponse>;

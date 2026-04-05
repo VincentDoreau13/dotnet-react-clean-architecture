@@ -21,11 +21,14 @@ export interface UpdateCatalogItemStockCommand {
 
 /**
  * ASP.NET Core ProblemDetails shape returned by CustomErrorHandlerHelper.
- * ValidationException errors include field messages under extensions.validations[].
+ * Extensions are serialized as top-level properties in the JSON response,
+ * not nested under an `extensions` object.
  */
 export interface ApiProblemDetails {
   title?: string
   detail?: string
   status?: number
-  extensions?: { validations?: string[] }
+  validations?: string[]
+  code?: string
+  traceId?: string
 }

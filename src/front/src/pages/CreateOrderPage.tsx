@@ -33,21 +33,21 @@ export default function CreateOrderPage() {
   const [quantity, setQuantity] = useState<string>("1")
 
   const { data: catalogItems = [] } = useQuery({
-    queryKey: ["catalog-items"],
+    queryKey: ["catalog", "list"],
     queryFn: catalogApi.getItems,
   })
 
   const { mutate, isPending, isError, error } = useMutation({
     mutationFn: ordersApi.createOrder,
     onSuccess: (createdOrder) => {
-      queryClient.invalidateQueries({ queryKey: ["orders"] })
-      queryClient.invalidateQueries({ queryKey: ["catalog-items"] })
+      queryClient.invalidateQueries({ queryKey: ["orders", "list"] })
+      queryClient.invalidateQueries({ queryKey: ["catalog", "list"] })
       navigate(`/orders/${createdOrder.id}`)
     },
   })
 
   const apiProblem = isApiError(error) ? error.response?.data : undefined
-  const apiValidations = apiProblem?.extensions?.validations
+  const apiValidations = apiProblem?.validations
   const apiErrorMessage =
     apiProblem?.detail ?? apiProblem?.title ?? "Failed to create order. Please try again."
 

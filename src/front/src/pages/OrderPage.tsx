@@ -25,7 +25,7 @@ export default function OrderPage() {
   const [confirmingDelete, setConfirmingDelete] = useState(false)
 
   const { data: order, isLoading, isError } = useQuery({
-    queryKey: ["order", stableId],
+    queryKey: ["orders", "detail", stableId],
     queryFn: () => ordersApi.getOrderById(orderId),
     enabled: isValidId,
   })
@@ -33,8 +33,8 @@ export default function OrderPage() {
   const deleteMutation = useMutation({
     mutationFn: () => ordersApi.deleteOrder(orderId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["orders"] })
-      queryClient.invalidateQueries({ queryKey: ["catalog-items"] })
+      queryClient.invalidateQueries({ queryKey: ["orders", "list"] })
+      queryClient.invalidateQueries({ queryKey: ["catalog", "list"] })
       navigate("/orders")
     },
   })

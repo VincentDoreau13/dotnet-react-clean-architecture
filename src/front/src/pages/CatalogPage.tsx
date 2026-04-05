@@ -17,7 +17,7 @@ import { catalogApi } from "@/api/catalog"
 export default function CatalogPage() {
   const navigate = useNavigate()
   const { data: items, isLoading, isError } = useQuery({
-    queryKey: ["catalog-items"],
+    queryKey: ["catalog", "list"],
     queryFn: catalogApi.getItems,
   })
 

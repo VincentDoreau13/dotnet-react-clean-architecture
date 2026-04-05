@@ -16,7 +16,7 @@ import { ordersApi } from "@/api/orders"
 export default function OrdersPage() {
   const navigate = useNavigate()
   const { data: orders, isLoading, isError } = useQuery({
-    queryKey: ["orders"],
+    queryKey: ["orders", "list"],
     queryFn: ordersApi.getOrders,
   })
 

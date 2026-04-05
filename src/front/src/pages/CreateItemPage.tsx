@@ -40,13 +40,13 @@ export default function CreateItemPage() {
   const { mutate, isPending, isError, error } = useMutation({
     mutationFn: catalogApi.createItem,
     onSuccess: (createdItem) => {
-      queryClient.invalidateQueries({ queryKey: ["catalog-items"] })
+      queryClient.invalidateQueries({ queryKey: ["catalog", "list"] })
       navigate(`/catalog/${createdItem.id}`)
     },
   })
 
   const apiProblem = isApiError(error) ? error.response?.data : undefined
-  const apiValidations = apiProblem?.extensions?.validations
+  const apiValidations = apiProblem?.validations
   const apiErrorMessage =
     apiProblem?.detail ?? apiProblem?.title ?? "Failed to create item. Please try again."
 

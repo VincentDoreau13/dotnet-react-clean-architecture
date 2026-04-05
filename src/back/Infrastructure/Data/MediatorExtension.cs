@@ -2,7 +2,7 @@ using MediatR;
 using ShopApi.Domain.Common;
 using ShopApi.Infrastructure.Data;
 
-namespace ShopApi.Infrastructure;
+namespace ShopApi.Infrastructure.Data;
 
 public static class MediatorExtension
 {

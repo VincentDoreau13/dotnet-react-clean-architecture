@@ -7,7 +7,7 @@ using ShopApi.Domain.Orders;
 
 namespace ShopApi.Application.Orders.Commands.CreateOrder;
 
-public class CreateOrderCommandHandler(
+public class CreateOrderHandler(
     IOrderRepository orderRepository,
     ICatalogRepository catalogRepository) : IRequestHandler<CreateOrderCommand, OrderDto>
 {

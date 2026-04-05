@@ -41,7 +41,7 @@ export default function CatalogItemPage() {
   const stableId = isValidId ? itemId : null
 
   const { data: item, isLoading, isError } = useQuery({
-    queryKey: ["catalog-item", stableId],
+    queryKey: ["catalog", "detail", stableId],
     queryFn: () => {
       if (!isValidId) throw new Error("Invalid item ID")
       return catalogApi.getItemById(itemId)
@@ -67,8 +67,8 @@ export default function CatalogItemPage() {
       return catalogApi.updateItemStock(itemId, formValues)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["catalog-item", stableId] })
-      queryClient.invalidateQueries({ queryKey: ["catalog-items"] })
+      queryClient.invalidateQueries({ queryKey: ["catalog", "detail", stableId] })
+      queryClient.invalidateQueries({ queryKey: ["catalog", "list"] })
     },
   })
 
