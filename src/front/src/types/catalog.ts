@@ -15,6 +15,10 @@ export interface CreateCatalogItemCommand {
   availableStock: number
 }
 
+export interface UpdateCatalogItemStockCommand {
+  availableStock: number
+}
+
 /**
  * ASP.NET Core ProblemDetails shape returned by CustomErrorHandlerHelper.
  * ValidationException errors include field messages under extensions.validations[].

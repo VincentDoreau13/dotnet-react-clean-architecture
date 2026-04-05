@@ -18,6 +18,7 @@ public class CreateCatalogItemValidator : AbstractValidator<CreateCatalogItemCom
             .GreaterThan(0).WithMessage("Price must be greater than 0.");
 
         RuleFor(catalogItem => catalogItem.AvailableStock)
-            .GreaterThanOrEqualTo(0).WithMessage("AvailableStock must be 0 or more.");
+            .GreaterThanOrEqualTo(0).WithMessage("AvailableStock must be 0 or more.")
+            .LessThanOrEqualTo(1_000_000).WithMessage("AvailableStock must not exceed 1000000.");
     }
 }

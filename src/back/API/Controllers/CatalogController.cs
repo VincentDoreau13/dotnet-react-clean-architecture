@@ -2,9 +2,11 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ShopApi.Application.Catalog.Commands.CreateCatalogItem;
+using ShopApi.Application.Catalog.Commands.UpdateCatalogItemStock;
 using ShopApi.Application.Catalog.DTOs;
 using ShopApi.Application.Catalog.Queries.GetCatalogItemById;
 using ShopApi.Application.Catalog.Queries.GetCatalogItems;
+using ShopApi.API.Requests;
 
 namespace ShopApi.API.Controllers;
 
@@ -39,5 +41,16 @@ public class CatalogController(IMediator mediator) : ControllerBase
     {
         var item = await mediator.Send(command, cancellationToken);
         return CreatedAtRoute("GetById", new { id = item.Id }, item);
+    }
+
+    /// <summary>Update the stock of a catalog item</summary>
+    [HttpPatch("items/{id:int}/stock")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UpdateStock(int id, [FromBody] UpdateStockRequest request, CancellationToken cancellationToken)
+    {
+        await mediator.Send(new UpdateCatalogItemStockCommand(id, request.AvailableStock), cancellationToken);
+        return NoContent();
     }
 }

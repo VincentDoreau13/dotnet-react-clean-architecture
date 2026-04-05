@@ -153,7 +153,6 @@ builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
     {
         policy.WithOrigins(origins)
-            .SetIsOriginAllowedToAllowWildcardSubdomains()
             .AllowAnyMethod()
             .AllowAnyHeader();
     });
@@ -175,6 +174,14 @@ using (var scope = app.Services.CreateScope())
 }
 
 // ─── Middleware Pipeline ──────────────────────────────────────────────────────
+app.Use(async (httpContext, next) =>
+{
+    httpContext.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    httpContext.Response.Headers["X-Frame-Options"] = "DENY";
+    httpContext.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    await next();
+});
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -186,19 +193,19 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseExceptionHandler(application => application.UseErrors(app.Environment));
-app.Use(async (ctx, next) =>
-{
-    ctx.Response.Headers["X-Content-Type-Options"] = "nosniff";
-    ctx.Response.Headers["X-Frame-Options"] = "DENY";
-    ctx.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
-    await next();
-});
-app.UseCors();
 app.UseHttpsRedirection();
+app.UseCors();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers().RequireRateLimiting("api");
-app.MapHealthChecks("/health");
+app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "text/plain";
+        await context.Response.WriteAsync(report.Status.ToString());
+    }
+});
 
 app.Run();

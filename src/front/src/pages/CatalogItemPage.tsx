@@ -1,15 +1,39 @@
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useEffect } from "react"
 import { useNavigate, useParams } from "react-router-dom"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
 import { ArrowLeft, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import Layout from "@/components/Layout"
-import { catalogApi } from "@/api/catalog"
+import { catalogApi, isApiError } from "@/api/catalog"
+
+const updateStockSchema = z.object({
+  availableStock: z.coerce
+    .number()
+    .int()
+    .min(0, "Stock cannot be negative")
+    .max(1_000_000, "Stock cannot exceed 1 000 000"),
+})
+
+type UpdateStockFormValues = z.infer<typeof updateStockSchema>
 
 export default function CatalogItemPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const itemId = Number(id)
   const isValidId = id !== undefined && Number.isInteger(itemId) && itemId > 0
   // Use null in the query key when the ID is invalid so the key is stable
@@ -18,14 +42,53 @@ export default function CatalogItemPage() {
 
   const { data: item, isLoading, isError } = useQuery({
     queryKey: ["catalog-item", stableId],
-    queryFn: () => catalogApi.getItemById(itemId),
+    queryFn: () => {
+      if (!isValidId) throw new Error("Invalid item ID")
+      return catalogApi.getItemById(itemId)
+    },
     enabled: isValidId,
   })
+
+  const stockForm = useForm<UpdateStockFormValues>({
+    resolver: zodResolver(updateStockSchema),
+    values: { availableStock: item?.availableStock ?? 0 },
+  })
+
+  const {
+    mutate: updateStock,
+    reset: resetUpdateStock,
+    isPending: isUpdateStockPending,
+    isSuccess: isUpdateStockSuccess,
+    isError: isUpdateStockError,
+    error: updateStockError,
+  } = useMutation({
+    mutationFn: (formValues: UpdateStockFormValues) => {
+      if (!isValidId) throw new Error("Invalid item ID")
+      return catalogApi.updateItemStock(itemId, formValues)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["catalog-item", stableId] })
+      queryClient.invalidateQueries({ queryKey: ["catalog-items"] })
+    },
+  })
+
+  useEffect(() => {
+    resetUpdateStock()
+  }, [item?.availableStock, resetUpdateStock])
+
+  const stockApiProblem = isApiError(updateStockError) ? updateStockError.response : undefined
+  const stockApiErrorMessage = (() => {
+    if (!stockApiProblem) return "Failed to update stock. Please try again."
+    if (stockApiProblem.status >= 500) return "A server error occurred. Please try again later."
+    return stockApiProblem.data?.detail ?? stockApiProblem.data?.title ?? "Failed to update stock. Please try again."
+  })()
+
+  const handleBackNavigation = () => navigate("/catalog")
 
   return (
     <Layout>
       <div className="mb-6">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/catalog")}>
+        <Button variant="ghost" size="sm" onClick={handleBackNavigation}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to catalog
         </Button>
@@ -92,12 +155,65 @@ export default function CatalogItemPage() {
 
             <Card>
               <CardHeader>
+                <CardTitle>Update Stock</CardTitle>
+                <CardDescription>Adjust the available quantity for this item</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...stockForm}>
+                  <form
+                    onSubmit={stockForm.handleSubmit((formValues) => {
+                      resetUpdateStock()
+                      updateStock(formValues)
+                    })}
+                    className="flex items-end gap-3"
+                  >
+                    <FormField
+                      control={stockForm.control}
+                      name="availableStock"
+                      render={({ field: availableStockField }) => (
+                        <FormItem className="flex-1">
+                          <FormLabel>Available Stock</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="1" min="0" {...availableStockField} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit" disabled={isUpdateStockPending}>
+                      {isUpdateStockPending ? "Saving…" : "Update stock"}
+                    </Button>
+                  </form>
+                </Form>
+
+                {isUpdateStockError && (
+                  <div className="mt-3 rounded-md bg-destructive/10 p-3 text-destructive text-sm">
+                    {stockApiErrorMessage}
+                  </div>
+                )}
+
+                {isUpdateStockSuccess && (
+                  <div className="mt-3 rounded-md bg-green-500/10 p-3 text-green-700 text-sm">
+                    Stock updated successfully.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
                 <CardTitle>Metadata</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-sm space-y-1">
-                  <p className="text-muted-foreground">Created at</p>
-                  <p>{new Date(item.createdAt).toLocaleString()}</p>
+                <div className="text-sm space-y-3">
+                  <div>
+                    <p className="text-muted-foreground">Created at</p>
+                    <p>{new Date(item.createdAt).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Updated at</p>
+                    <p>{new Date(item.updatedAt).toLocaleString()}</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>

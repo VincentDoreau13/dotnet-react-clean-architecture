@@ -33,7 +33,7 @@ Use the `/add-feature` skill. It covers all layers end-to-end: Domain → Applic
 
 ## EF Core Conventions
 
-- `AppDbContext` sets `QueryTrackingBehavior.NoTracking` globally — **never add `.AsNoTracking()` in repositories**. Use `.AsTracking()` only for write operations that need change tracking.
+- `AppDbContext` sets `QueryTrackingBehavior.NoTracking` globally — **never add `.AsNoTracking()` in repositories**. Do **not** use `.AsTracking()` for writes either — call `repository.Update(entity)` instead, which forces `EntityState.Modified`. This generates a full-column `UPDATE` by design (performance trade-off: lightweight reads, explicit writes).
 - `HasData` seed uses **anonymous types** (not `new Entity { ... }`) to be compatible with private setters. Nullable fields can be omitted — EF inserts `null` by default.
 
 ## Error Handling

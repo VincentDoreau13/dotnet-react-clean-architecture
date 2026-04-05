@@ -1,4 +1,4 @@
-import type { CatalogItemDto, CreateCatalogItemCommand } from "@/types/catalog"
+import type { CatalogItemDto, CreateCatalogItemCommand, UpdateCatalogItemStockCommand } from "@/types/catalog"
 import { apiClient } from "@/api/client"
 
 export { isApiError } from "@/api/client"
@@ -12,4 +12,7 @@ export const catalogApi = {
 
   createItem: (command: CreateCatalogItemCommand): Promise<CatalogItemDto> =>
     apiClient.post<CatalogItemDto>("/catalog/items", command).then((response) => response.data),
+
+  updateItemStock: (id: number, command: UpdateCatalogItemStockCommand): Promise<void> =>
+    apiClient.patch(`/catalog/items/${id}/stock`, command).then(() => undefined),
 }

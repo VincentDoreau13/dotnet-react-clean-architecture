@@ -27,9 +27,12 @@ public class CatalogItem : BaseEntity, IAuditable
 
     public void RemoveStock(int quantity)
     {
+        if (quantity <= 0)
+            throw new FunctionalException("INVALID_QUANTITY",
+                "Stock quantity to remove must be greater than 0.");
+
         if (AvailableStock - quantity < 0)
-            throw new FunctionalException("INSUFFICIENT_STOCK",
-                $"Not enough stock for '{Name}'. Available: {AvailableStock}, requested: {quantity}.");
+            throw new FunctionalException("INSUFFICIENT_STOCK", "Not enough stock for this item.");
 
         AvailableStock -= quantity;
     }
@@ -40,6 +43,19 @@ public class CatalogItem : BaseEntity, IAuditable
             throw new FunctionalException("INVALID_QUANTITY",
                 "Stock quantity to add must be greater than 0.");
 
+        if (AvailableStock > int.MaxValue - quantity)
+            throw new FunctionalException("STOCK_OVERFLOW",
+                "Adding this quantity would exceed the maximum stock limit.");
+
         AvailableStock += quantity;
+    }
+
+    public void SetStock(int quantity)
+    {
+        if (quantity < 0)
+            throw new FunctionalException("NEGATIVE_QUANTITY", "Stock quantity cannot be negative.");
+        if (quantity > 1_000_000)
+            throw new FunctionalException("STOCK_LIMIT_EXCEEDED", "Stock cannot exceed 1 000 000.");
+        AvailableStock = quantity;
     }
 }
