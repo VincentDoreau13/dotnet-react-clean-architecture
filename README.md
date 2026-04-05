@@ -54,7 +54,7 @@ Scaffolds the full feature end-to-end: Domain → Application → Infrastructure
 ### 2. Review
 
 ```
-/code-review
+/everything-claude-code:code-review
 ```
 
 Reviews the current branch for correctness, type safety, security, and pattern compliance. Pass a PR number to post the review directly to GitHub.

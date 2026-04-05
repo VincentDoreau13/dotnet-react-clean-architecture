@@ -1,6 +1,7 @@
-import { useQuery } from "@tanstack/react-query"
+import { useState } from "react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useNavigate, useParams } from "react-router-dom"
-import { ArrowLeft, ShoppingCart } from "lucide-react"
+import { ArrowLeft, ShoppingCart, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -17,14 +18,25 @@ import { ordersApi } from "@/api/orders"
 export default function OrderPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const orderId = Number(id)
   const isValidId = id !== undefined && Number.isInteger(orderId) && orderId > 0
   const stableId = isValidId ? orderId : null
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
 
   const { data: order, isLoading, isError } = useQuery({
     queryKey: ["order", stableId],
     queryFn: () => ordersApi.getOrderById(orderId),
     enabled: isValidId,
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: () => ordersApi.deleteOrder(orderId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] })
+      queryClient.invalidateQueries({ queryKey: ["catalog-items"] })
+      navigate("/orders")
+    },
   })
 
   return (
@@ -56,17 +68,56 @@ export default function OrderPage() {
 
       {order && (
         <div className="max-w-2xl">
-          <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-              <ShoppingCart className="h-5 w-5" />
+          <div className="mb-6 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                <ShoppingCart className="h-5 w-5" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight">Order #{order.id}</h1>
+                <p className="text-sm text-muted-foreground">
+                  Placed on {new Date(order.createdAt).toLocaleString()}
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">Order #{order.id}</h1>
-              <p className="text-sm text-muted-foreground">
-                Placed on {new Date(order.createdAt).toLocaleString()}
-              </p>
-            </div>
+
+            {!confirmingDelete ? (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setConfirmingDelete(true)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Delete this order?</span>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={deleteMutation.isPending}
+                  onClick={() => deleteMutation.mutate()}
+                >
+                  {deleteMutation.isPending ? "Deleting…" : "Confirm"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={deleteMutation.isPending}
+                  onClick={() => { setConfirmingDelete(false); deleteMutation.reset() }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            )}
           </div>
+
+          {deleteMutation.isError && (
+            <div className="mb-4 rounded-md bg-destructive/10 p-4 text-destructive text-sm">
+              Failed to delete the order. Please try again.
+            </div>
+          )}
 
           <div className="grid gap-4">
             <Card>

@@ -24,4 +24,9 @@ public class Order : BaseEntity, IAuditable
 
         return order;
     }
+
+    public void MarkForDeletion()
+    {
+        AddDomainEvent(new OrderDeletedDomainEvent(this));
+    }
 }

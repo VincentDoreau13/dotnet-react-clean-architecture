@@ -10,4 +10,7 @@ export const ordersApi = {
 
   createOrder: (command: CreateOrderCommand): Promise<OrderDto> =>
     apiClient.post<OrderDto>("/orders", command).then((response) => response.data),
+
+  deleteOrder: (id: number): Promise<void> =>
+    apiClient.delete(`/orders/${id}`).then(() => undefined),
 }

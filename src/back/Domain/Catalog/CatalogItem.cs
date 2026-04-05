@@ -31,4 +31,13 @@ public class CatalogItem : BaseEntity, IAuditable
 
         AvailableStock -= quantity;
     }
+
+    public void AddStock(int quantity)
+    {
+        if (quantity <= 0)
+            throw new FunctionalException("INVALID_QUANTITY",
+                "Stock quantity to add must be greater than 0.");
+
+        AvailableStock += quantity;
+    }
 }

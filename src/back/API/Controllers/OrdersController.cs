@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using ShopApi.Application.Orders.Commands.CreateOrder;
+using ShopApi.Application.Orders.Commands.DeleteOrder;
 using ShopApi.Application.Orders.DTOs;
 using ShopApi.Application.Orders.Queries.GetOrderById;
 using ShopApi.Application.Orders.Queries.GetOrders;
@@ -37,5 +38,15 @@ public class OrdersController(IMediator mediator) : ControllerBase
     {
         var order = await mediator.Send(command, cancellationToken);
         return CreatedAtRoute("GetOrderById", new { id = order.Id }, order);
+    }
+
+    /// <summary>Delete an order</summary>
+    [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+    {
+        await mediator.Send(new DeleteOrderCommand(id), cancellationToken);
+        return NoContent();
     }
 }
